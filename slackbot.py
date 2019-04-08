@@ -8,21 +8,48 @@ Get these from the Slack account settings that you are connecting to.
    BOT_USER_ID = 'U20981S736'
    BOT_USER_TOKEN = 'xoxb-106076235608-AbacukynpGahsicJqugKZC'
 """
-__author__ = '???'
-BOT_NAME = 'my-bot-name'
+
+import logging
+import signal
+import time
+from slackclient import SlackClient
+
+__author__ = 'dougenas and mpmckenz'
+BOT_NAME = 'Spotbot'
 BOT_CHAN = '#bot-test'
 
+still_running = True
+logger = logging.getLogger(__name__)
+loop_int = 5
 
 def config_logger():
     """Setup logging configuration"""
+    global logger
+    logger.setLevel(logging.INFO)
+
+    formatter = logging.Formatter('%(asctime)s:%(message)s')
+    file_handler = logging.FileHandler("filelog.log")
+    file_handler.setFormatter(formatter)
+
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(formatter)
+
+    logger.addHandler(file_handler)
+    logger.addHandler(stream_handler)
 
 
 def command_loop(bot):
     """Process incoming bot commands"""
-    pass
+    print("This is a test")
+    # pass
 
 
 def signal_handler(sig_num, frame):
+    global logger
+    logger.info("signal number: {}".format(sig_num))
+    if sig_num == 5:
+        global still_running
+        still_running = False
     pass
 
 
@@ -56,6 +83,12 @@ class SlackBot:
 
 
 def main():
+    config_logger()
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+    while still_running:
+        # command_loop(bot)
+        time.sleep(loop_int)
     pass
 
 
