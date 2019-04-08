@@ -22,6 +22,28 @@ still_running = True
 logger = logging.getLogger(__name__)
 loop_int = 5
 
+bot_commands = {
+    'help':  'Shows this helpful command reference.',
+    'ping':  'Show uptime of this bot.',
+    'exit':  'Shutdown the entire bot (requires app restart)',
+    'raise':  'Manually test exception handler'
+}
+
+def formatted_dict(d, k_header='Keys', v_header='Values'):
+    """Renders contents of a dict into a preformatted string"""
+    if d:
+        lines = []
+        # find the longest key entry in d or the key header string
+        width = max(map(len, d))
+        width = max(width, len(k_header))
+        lines.extend(['{k:<{w}} : {v}'.format(k=k_header, v=v_header, w=width)])
+        lines.extend(['-'*width + '   ' + '-'*len(v_header)])
+        lines.extend('{k:<{w}} : {v}'.format(k=k, v=v, w=width) for k, v in d.items())
+        return '\n'.join(lines)
+    return "<empty>"
+
+print(formatted_dict(bot_commands, k_header="My cmds", v_header='What they do'))
+
 def config_logger():
     """Setup logging configuration"""
     global logger
