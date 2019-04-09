@@ -12,6 +12,7 @@ Get these from the Slack account settings that you are connecting to.
 import logging
 import signal
 import time
+import os
 from slackclient import SlackClient
 
 __author__ = 'dougenas and mpmckenz'
@@ -21,6 +22,8 @@ BOT_CHAN = '#bot-test'
 still_running = True
 logger = logging.getLogger(__name__)
 loop_int = 5
+slack_token = os.environ["SLACK_API_TOKEN"]
+sc = SlackClient(slack_token)
 
 bot_commands = {
     'help':  'Shows this helpful command reference.',
@@ -50,7 +53,7 @@ def config_logger():
     logger.setLevel(logging.INFO)
 
     formatter = logging.Formatter('%(asctime)s:%(message)s')
-    file_handler = logging.FileHandler("filelog.log")
+    file_handler = logging.FileHandler("spotbot.log")
     file_handler.setFormatter(formatter)
 
     stream_handler = logging.StreamHandler()
@@ -97,6 +100,11 @@ class SlackBot:
 
     def post_message(self, msg, chan=BOT_CHAN):
         """Sends a message to a Slack Channel"""
+        sc.api_call(
+            "chat.postMessage",
+            channel=chan,
+            text=msg)
+
         pass
 
     def handle_command(self, raw_cmd, channel):
@@ -104,13 +112,23 @@ class SlackBot:
         pass
 
 
+
 def main():
     config_logger()
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
+    logger.info("Spotbot initiated")
     while still_running:
         # command_loop(bot)
-        time.sleep(loop_int)
+        slack_client = SlackClient(os.getenv('SLACK_BOT_TOKEN'))
+
+        if slack_client.rtm_connect(with_team_state=False):
+
+            logger.info("Slackbot initialized!")
+
+        else:
+            logger.error("Could not connect, will retry in 5 seconds...")
+            time.sleep(5)
     pass
 
 
