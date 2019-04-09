@@ -12,6 +12,7 @@ Get these from the Slack account settings that you are connecting to.
 import logging
 import signal
 import time
+import os
 from slackclient import SlackClient
 
 __author__ = 'dougenas and mpmckenz'
@@ -21,6 +22,35 @@ BOT_CHAN = '#bot-test'
 still_running = True
 logger = logging.getLogger(__name__)
 loop_int = 5
+slack_token = os.environ["SLACK_API_TOKEN"]
+sc = SlackClient(slack_token)
+
+bot_commands = {
+    'help':  'Shows this helpful command reference.',
+    'ping':  'Show uptime of this bot.',
+    'exit':  'Shutdown the entire bot (requires app restart)',
+    'raise':  'Manually test exception handler'
+}
+
+
+def formatted_dict(d, k_header='Keys', v_header='Values'):
+    """Renders contents of a dict into a preformatted string"""
+    if d:
+        lines = []
+        # find the longest key entry in d or the key header string
+        width = max(map(len, d))
+        width = max(width, len(k_header))
+        lines.extend(['{k:<{w}} : {v}'.format(
+            k=k_header, v=v_header, w=width)])
+        lines.extend(['-'*width + '   ' + '-'*len(v_header)])
+        lines.extend('{k:<{w}} : {v}'.format(k=k, v=v, w=width)
+                     for k, v in d.items())
+        return '\n'.join(lines)
+    return "<empty>"
+
+
+print(formatted_dict(bot_commands, k_header="My cmds", v_header='What they do'))
+
 
 def config_logger():
     """Setup logging configuration"""
@@ -28,7 +58,7 @@ def config_logger():
     logger.setLevel(logging.INFO)
 
     formatter = logging.Formatter('%(asctime)s:%(message)s')
-    file_handler = logging.FileHandler("filelog.log")
+    file_handler = logging.FileHandler("spotbot.log")
     file_handler.setFormatter(formatter)
 
     stream_handler = logging.StreamHandler()
@@ -75,6 +105,11 @@ class SlackBot:
 
     def post_message(self, msg, chan=BOT_CHAN):
         """Sends a message to a Slack Channel"""
+        sc.api_call(
+            "chat.postMessage",
+            channel=chan,
+            text=msg)
+
         pass
 
     def handle_command(self, raw_cmd, channel):
@@ -86,9 +121,18 @@ def main():
     config_logger()
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
+    logger.info("Spotbot initiated")
     while still_running:
         # command_loop(bot)
-        time.sleep(loop_int)
+        slack_client = SlackClient(os.getenv('SLACK_BOT_TOKEN'))
+
+        if slack_client.rtm_connect(with_team_state=False):
+
+            logger.info("Slackbot initialized!")
+
+        else:
+            logger.error("Could not connect, will retry in 5 seconds...")
+            time.sleep(5)
     pass
 
 
