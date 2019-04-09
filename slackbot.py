@@ -19,7 +19,7 @@ import re
 from slackclient import SlackClient
 from dotenv import load_dotenv
 
-BOT_NAME = 'Spotbot'
+BOT_NAME = 'spotify_bot'
 BOT_CHAN = '#bot-test'
 bot_id = None
 
@@ -77,9 +77,12 @@ def config_logger():
 
 def command_loop(bot):
     """Process incoming bot commands"""
-    # command, channel = bot.parse_bot_commands(bot.slack_client.rtm_read())
-    # print(command, channel)
-    pass
+    command, channel = bot.parse_bot_commands(bot.slack_client.rtm_read())
+    if command:
+        message = "test 1 2 3"
+        bot.post_message(message, channel)
+        print(command, channel)
+    
 
 
 def signal_handler(sig_num, frame):
@@ -91,44 +94,6 @@ def signal_handler(sig_num, frame):
     stay_running = False
     pass
 
-def parse_direct_mention(message_text):
-        """
-            Finds a direct mention (a mention that is at the beginning) in message text
-            and returns the user ID which was mentioned. If there is no direct mention, returns None
-        """
-        matches = re.search(MENTION_REGEX, message_text)
-        return (matches.group(1), matches.group(2).strip()) if matches else (None, None)
-
-def parse_bot_commands(slack_events):
-        """
-            Parses a list of events coming from the Slack RTM API to find bot commands.
-            If a bot command is found, this function returns a tuple of command and channel.
-            If its not found, then this function returns None, None.
-        """
-        for event in slack_events:
-            if event["type"] == "message" and not "subtype" in event:
-                user_id, message = parse_direct_mention(event["text"])
-                if user_id == bot_id:
-                    return message, event["channel"]
-        return None, None
-
-def handle_command(command, channel):
-        """Parses a raw command string from the bot"""
-        """
-        Executes bot command if the command is known
-    """
-        default_response = "Not sure what you mean. Try *{}*.".format(EXAMPLE_COMMAND)
-        response = None
-        if command.startswith(EXAMPLE_COMMAND):
-            response = "Sure...write some more code then I can do that!"
-        sc.api_call(
-            "chat.postMessage",
-            channel=channel,
-            text=response or default_response
-    )
-        pass
-
-
 class SlackBot:
 
     def __init__(self, bot_user_token, bot_id=None):
@@ -136,16 +101,38 @@ class SlackBot:
         self.slack_client = SlackClient(bot_user_token)
         self.bot_name = BOT_NAME
         self.bot_id = self.get_bot_id()
-        pass
+
+        if self.bot_id is None:
+            exit("Error, could not find " + str(self.bot_name))
 
     def get_bot_id(self):
         api_call = self.slack_client.api_call("users.list")
         if api_call.get('ok'):
+            # retrieve all users so we can find our bot
             users = api_call.get('members')
             for user in users:
                 if 'name' in user and user.get('name') == self.bot_name:
+                    # return "<@" + user.get('id') + ">"
                     return user.get('id')
             return None
+
+    def parse_bot_commands(self, slack_events):
+        print(slack_events)
+        for event in slack_events:
+            if event.get("type") == "message" and not "subtype" in event:
+                user_id, message = self.parse_direct_mention(event.get("text"))
+                print(user_id, self.bot_id)
+                if user_id == self.bot_id:
+                    print("inside logic")
+                    return message, event.get("channel")
+        return None, None
+
+    def parse_direct_mention(self, message_text):
+        matches = re.search(MENTION_REGEX, message_text)
+        if matches:
+            return matches.group(1), matches.group(2).strip()
+        else:
+            return (None, None)
 
     def __repr__(self):
         pass
@@ -161,33 +148,33 @@ class SlackBot:
         """Implement this method to make this a context manager"""
         pass
 
-    def post_message(self, msg, chan=BOT_CHAN):
+    def post_message(self, msg, channel):
         """Sends a message to a Slack Channel"""
-        sc.api_call(
+        self.slack_client.api_call(
             "chat.postMessage",
-            channel=chan,
-            text=msg)
+            channel=channel,
+            text=msg
+        )
+       
 
+    def handle_command(self, raw_cmd, channel):
+        """Parses a raw command string from the bot"""
         pass
+
 
 
 def main():
     config_logger()
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
-    logger.info("Spotbot initialized!")
-    
-    while stay_running:
-        if sc.rtm_connect(with_team_state=False):
-            bot_id = sc.api_call("auth.test")["user_id"]
-            command, channel = parse_bot_commands(sc.rtm_read())
-            if command:
-                handle_command(command, channel)
-            time.sleep(RTM_READ_DELAY)
+    bot = SlackBot(slack_token)
+    if bot.slack_client.rtm_connect(with_team_state=False):
+        logger.info("Spotbot initialized!")
+        while stay_running:
+            command_loop(bot)
+            time.sleep(loop_int)
 
-        else:
-            logger.error("Could not connect, will retry in 5 seconds...")
-            time.sleep(5)
+        
     pass
 
 
