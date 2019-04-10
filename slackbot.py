@@ -21,23 +21,17 @@ from spotbot import artist_top_10, sp, get_playlists
 from dotenv import load_dotenv
 
 BOT_NAME = 'spotify_bot'
-BOT_CHAN = '#bot-test'
-bot_id = None
+BOT_CHAN = 'UHD6NDSH0'
 
 stay_running = True
 logger = logging.getLogger(__name__)
 loop_int = 2
+MENTION_REGEX = "^<@(|[WU].+?)>(.*)"
 
 env_path = os.path.join('./', '.env')
 load_dotenv(dotenv_path=env_path, verbose=True, override=True)
 
 slack_token = os.getenv('SLACK_API_TOKEN')
-sc = SlackClient(slack_token)
-
-RTM_READ_DELAY = 1 # 1 second delay between reading from RTM
-EXAMPLE_COMMAND = "do"
-MENTION_REGEX = "^<@(|[WU].+?)>(.*)"
-
 
 def config_logger():
     """Setup logging configuration"""
@@ -52,54 +46,40 @@ def config_logger():
     stream_handler.setFormatter(formatter)
 
     logger.addHandler(file_handler)
-    logger.addHandler(stream_handler)
+    # logger.addHandler(stream_handler)
 
 
 def command_loop(bot):
+
     """Process incoming bot commands"""
-    
-    command, channel = bot.parse_bot_commands(bot.slack_client.rtm_read())
-    sc.rtm_connect()
-    if command:
-        cmd = handle_command(command)
-        post_message(cmd, channel)
-
-
-class CustomError(Exception):
-    pass
-
-def handle_command(command):
-    """
-        Interpret commands and send them to execute_command
-    """
-    response = None
-    HELP = "-help"
-    LED = "led"
+    HELP = "help"
+    STAIRWAY = "stairway"
     PLAYLIST = "playlist"
     RAISE = "raise"
     LOGOUT = "logout"
+    PING = "ping"
 
-
-    # This is where you start to implement more commands!
     global stay_running
-    if not command:
-        response = "Spotpot is online"
-    if command.startswith(RAISE):
-        raise CustomError("what happened???")
-    if command.startswith(HELP):
-        response = "Try these commands: led / playlist"
-    if command.startswith(LED):
-        response = artist_top_10(sp)
-    if command.startswith(PLAYLIST):
-        response = get_playlists(sp)
-    if command.startswith(LOGOUT):
-        stay_running = False
-        response = "Exiting..."
-        logger.info("Connection terminated by user's exit command.")
-    logger.info('User initiated command: {}'.format(command))
-    return response
 
+    command, channel = bot.parse_bot_commands(bot.slack_client.rtm_read())
+    if command:
+        if command == HELP:
+            bot.help(channel)
+        elif command == STAIRWAY:
+            bot.stairway(channel)
+        elif command == PLAYLIST:
+            bot.playlist(channel)
+        elif command == LOGOUT:
+            stay_running = False
+            bot.logout(channel)
+            logger.info('User initiated command: {}'.format(command))
+        elif command == RAISE:
+            raise CustomError("What did you do?")
+        elif command == PING:
+            bot.ping(channel)
 
+class CustomError(Exception):
+    pass
 
 def signal_handler(sig_num, frame):
     global stay_running
@@ -110,13 +90,6 @@ def signal_handler(sig_num, frame):
     stay_running = False
     pass
 
-def post_message(msg, channel):
-    """Sends a message to a Slack Channel"""
-    sc.api_call(
-        "chat.postMessage",
-        channel=channel,
-        text=msg
-        )
 
 class SlackBot:
 
@@ -132,11 +105,10 @@ class SlackBot:
     def get_bot_id(self):
         api_call = self.slack_client.api_call("users.list")
         if api_call.get('ok'):
-            # retrieve all users so we can find our bot
             users = api_call.get('members')
             for user in users:
                 if 'name' in user and user.get('name') == self.bot_name:
-                    # return "<@" + user.get('id') + ">"
+
                     return user.get('id')
             return None
 
@@ -156,6 +128,36 @@ class SlackBot:
         else:
             return (None, None)
 
+    def post_message(self, msg, channel):
+        """Sends a message to a Slack Channel"""
+        self.slack_client.api_call(
+            "chat.postMessage",
+            channel=channel,
+            text=msg
+
+        )
+    def help(self, channel):
+        message = "Try these commands: stairway | playlist | logout | ping | help"
+        self.post_message(message, channel)
+
+    def stairway(self, channel):
+        info = artist_top_10(sp)
+        self.post_message(info, channel)
+
+    def playlist(self, channel):
+        info = get_playlists(sp)
+        self.post_message(info, channel)
+
+    def logout(self, channel):
+        message = "Spotbot has logged off"
+        self.post_message(message, channel)
+
+    def ping(self, channel):
+        start_time = time.time()
+        message = "Spotbot Uptime: {} seconds".format(time.time() - start_time)
+        self.post_message(message, channel)
+
+
 
 def main():
     ONLINE = "Spotbot is online"
@@ -165,14 +167,11 @@ def main():
     bot = SlackBot(slack_token)
     
     if bot.slack_client.rtm_connect(with_team_state=False):
+        bot.post_message(ONLINE, BOT_CHAN)
         logger.info("Spotbot initialized!")
         while stay_running:
             command_loop(bot)
             time.sleep(loop_int)
-
-        
-    pass
-
 
 if __name__ == '__main__':
     main()
