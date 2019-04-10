@@ -17,6 +17,7 @@ import time
 import os
 import re
 from slackclient import SlackClient
+from spotbot import artist_top_10, sp, get_playlists
 from dotenv import load_dotenv
 
 BOT_NAME = 'spotify_bot'
@@ -25,39 +26,18 @@ bot_id = None
 
 stay_running = True
 logger = logging.getLogger(__name__)
-loop_int = 5
+loop_int = 2
+
 env_path = os.path.join('./', '.env')
 load_dotenv(dotenv_path=env_path, verbose=True, override=True)
+
 slack_token = os.getenv('SLACK_API_TOKEN')
 sc = SlackClient(slack_token)
-
 
 RTM_READ_DELAY = 1 # 1 second delay between reading from RTM
 EXAMPLE_COMMAND = "do"
 MENTION_REGEX = "^<@(|[WU].+?)>(.*)"
 
-
-bot_commands = {
-    'help':  'Shows this helpful command reference.',
-    'ping':  'Show uptime of this bot.',
-    'exit':  'Shutdown the entire bot (requires app restart)',
-    'raise':  'Manually test exception handler'
-}
-
-def formatted_dict(d, k_header='Keys', v_header='Values'):
-    """Renders contents of a dict into a preformatted string"""
-    if d:
-        lines = []
-        # find the longest key entry in d or the key header string
-        width = max(map(len, d))
-        width = max(width, len(k_header))
-        lines.extend(['{k:<{w}} : {v}'.format(k=k_header, v=v_header, w=width)])
-        lines.extend(['-'*width + '   ' + '-'*len(v_header)])
-        lines.extend('{k:<{w}} : {v}'.format(k=k, v=v, w=width) for k, v in d.items())
-        return '\n'.join(lines)
-    return "<empty>"
-
-print(formatted_dict(bot_commands, k_header="My cmds", v_header='What they do'))
 
 def config_logger():
     """Setup logging configuration"""
@@ -77,12 +57,48 @@ def config_logger():
 
 def command_loop(bot):
     """Process incoming bot commands"""
-    command, channel = bot.parse_bot_commands(bot.slack_client.rtm_read())
-    if command:
-        message = "test 1 2 3"
-        bot.post_message(message, channel)
-        print(command, channel)
     
+    command, channel = bot.parse_bot_commands(bot.slack_client.rtm_read())
+    sc.rtm_connect()
+    if command:
+        cmd = handle_command(command)
+        post_message(cmd, channel)
+
+
+class CustomError(Exception):
+    pass
+
+def handle_command(command):
+    """
+        Interpret commands and send them to execute_command
+    """
+    response = None
+    HELP = "-help"
+    LED = "led"
+    PLAYLIST = "playlist"
+    RAISE = "raise"
+    LOGOUT = "logout"
+
+
+    # This is where you start to implement more commands!
+    global stay_running
+    if not command:
+        response = "Spotpot is online"
+    if command.startswith(RAISE):
+        raise CustomError("what happened???")
+    if command.startswith(HELP):
+        response = "Try these commands: led / playlist"
+    if command.startswith(LED):
+        response = artist_top_10(sp)
+    if command.startswith(PLAYLIST):
+        response = get_playlists(sp)
+    if command.startswith(LOGOUT):
+        stay_running = False
+        response = "Exiting..."
+        logger.info("Connection terminated by user's exit command.")
+    logger.info('User initiated command: {}'.format(command))
+    return response
+
 
 
 def signal_handler(sig_num, frame):
@@ -93,6 +109,14 @@ def signal_handler(sig_num, frame):
 
     stay_running = False
     pass
+
+def post_message(msg, channel):
+    """Sends a message to a Slack Channel"""
+    sc.api_call(
+        "chat.postMessage",
+        channel=channel,
+        text=msg
+        )
 
 class SlackBot:
 
@@ -117,13 +141,11 @@ class SlackBot:
             return None
 
     def parse_bot_commands(self, slack_events):
-        print(slack_events)
         for event in slack_events:
             if event.get("type") == "message" and not "subtype" in event:
                 user_id, message = self.parse_direct_mention(event.get("text"))
                 print(user_id, self.bot_id)
                 if user_id == self.bot_id:
-                    print("inside logic")
                     return message, event.get("channel")
         return None, None
 
@@ -134,40 +156,14 @@ class SlackBot:
         else:
             return (None, None)
 
-    def __repr__(self):
-        pass
-
-    def __str__(self):
-        pass
-
-    def __enter__(self):
-        """Implement this method to make this a context manager"""
-        pass
-
-    def __exit__(self, type, value, traceback):
-        """Implement this method to make this a context manager"""
-        pass
-
-    def post_message(self, msg, channel):
-        """Sends a message to a Slack Channel"""
-        self.slack_client.api_call(
-            "chat.postMessage",
-            channel=channel,
-            text=msg
-        )
-       
-
-    def handle_command(self, raw_cmd, channel):
-        """Parses a raw command string from the bot"""
-        pass
-
-
 
 def main():
+    ONLINE = "Spotbot is online"
     config_logger()
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
     bot = SlackBot(slack_token)
+    
     if bot.slack_client.rtm_connect(with_team_state=False):
         logger.info("Spotbot initialized!")
         while stay_running:
