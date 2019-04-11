@@ -90,7 +90,7 @@ def command_loop(bot):
             bot.fun(channel)
             log
         else:
-            bot.post_message(DEFAULT, BOT_CHAN)
+            bot.post_message(DEFAULT, channel)
 
 
 class CustomError(Exception):
