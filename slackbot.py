@@ -21,7 +21,7 @@ from spotbot import artist_top_10, sp, get_playlists, search_tool
 from dotenv import load_dotenv
 
 BOT_NAME = 'spotify_bot'
-BOT_CHAN = 'CCD7MHJD8'
+BOT_CHAN = 'CHU4BDCDD'
 
 stay_running = True
 logger = logging.getLogger(__name__)
@@ -65,6 +65,7 @@ def command_loop(bot):
     global stay_running
 
     command, channel = bot.parse_bot_commands(bot.slack_client.rtm_read())
+    print("Channel is {}".format(channel))
     if command:
         log = logger.info('User initiated command: {}'.format(command))
         if command == HELP:
