@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+from dotenv import load_dotenv
+from spotbot import artist_top_10, sp, get_playlists, search_tool
 """
 A slackbot that responds to commands.
 This uses the Slack RTM (Real Time Messaging) API.
@@ -14,11 +16,9 @@ import signal
 import time
 import os
 from slackclient import SlackClient
-<<<<<<< Updated upstream
-=======
-from spotbot import artist_top_10, sp, get_playlists, search_tool
-from dotenv import load_dotenv
->>>>>>> Stashed changes
+<< << << < Updated upstream
+== == == =
+>>>>>> > Stashed changes
 
 __author__ = 'dougenas and mpmckenz'
 BOT_NAME = 'Spotbot'
@@ -57,7 +57,6 @@ def formatted_dict(d, k_header='Keys', v_header='Values'):
 print(formatted_dict(bot_commands, k_header="My cmds", v_header='What they do'))
 
 
-
 def config_logger():
     """Setup logging configuration"""
     global logger
@@ -76,11 +75,13 @@ def config_logger():
 
 def command_loop(bot):
     """Process incoming bot commands"""
-<<<<<<< Updated upstream
+
+
+<< << << < Updated upstream
     print("This is a test")
     # pass
 
-=======
+== == == =
     HELP = "help"
     STAIRWAY = "stairway"
     PLAYLIST = "playlist"
@@ -120,7 +121,10 @@ def signal_handler(sig_num, frame):
     sigs = dict((k, v) for v, k in reversed(sorted(signal.__dict__.items()))
                 if v.startswith('SIG') and not v.startswith('SIG_'))
     logger.warning('Received OS Signal: {}'.format(sigs[sig_num]))
->>>>>>> Stashed changes
+
+
+>>>>>> > Stashed changes
+
 
 def signal_handler(sig_num, frame):
     global logger
@@ -140,16 +144,11 @@ class SlackBot:
     def __repr__(self):
         pass
 
-<<<<<<< Updated upstream
-    def __str__(self):
-        pass
-=======
         )
 
     def help(self, channel):
-        message = "Try these commands: stairway | playlist | logout | ping | help | fun"
+        message="Try these commands: stairway | playlist | logout | ping | help | fun"
         self.post_message(message, channel)
->>>>>>> Stashed changes
 
     def __enter__(self):
         """Implement this method to make this a context manager"""
@@ -159,22 +158,13 @@ class SlackBot:
         """Implement this method to make this a context manager"""
         pass
 
-<<<<<<< Updated upstream
-    def post_message(self, msg, chan=BOT_CHAN):
-        """Sends a message to a Slack Channel"""
-        sc.api_call(
-            "chat.postMessage",
-            channel=chan,
-            text=msg)
-=======
     def fun(self, channel):
-        info = search_tool(sp)
+        info=search_tool(sp)
         self.post_message(info, channel)
 
     def logout(self, channel):
-        message = "Spotbot has logged off"
+        message="Spotbot has logged off"
         self.post_message(message, channel)
->>>>>>> Stashed changes
 
         pass
 
@@ -186,31 +176,14 @@ def main():
     config_logger()
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
-<<<<<<< Updated upstream
-    logger.info("Spotbot initiated")
-    while still_running:
-        # command_loop(bot)
-        slack_client = SlackClient(os.getenv('SLACK_BOT_TOKEN'))
+    bot=SlackBot(slack_token)
 
-        if slack_client.rtm_connect(with_team_state=False):
-
-            logger.info("Slackbot initialized!")
-
-        else:
-            logger.error("Could not connect, will retry in 5 seconds...")
-            time.sleep(5)
-    pass
-
-=======
-    bot = SlackBot(slack_token)
-
-    if bot.slack_client.rtm_connect(with_team_state=False):
+    if bot.slack_client.rtm_connect(with_team_state = False):
         bot.post_message(ONLINE, BOT_CHAN)
         logger.info("Spotbot initialized!")
         while stay_running:
             command_loop(bot)
             time.sleep(loop_int)
->>>>>>> Stashed changes
 
 
 if __name__ == '__main__':
