@@ -33,6 +33,7 @@ load_dotenv(dotenv_path=env_path, verbose=True, override=True)
 
 slack_token = os.getenv('SLACK_API_TOKEN')
 
+
 def config_logger():
     """Setup logging configuration"""
     global logger
@@ -58,6 +59,7 @@ def command_loop(bot):
     RAISE = "raise"
     LOGOUT = "logout"
     PING = "ping"
+    EXCEPTION = "You raised an error"
     DEFAULT = "Not sure what you mean. Try 'help' to see a list of usable commands"
 
     global stay_running
@@ -75,7 +77,7 @@ def command_loop(bot):
             bot.logout(channel)
             logger.info('User initiated command: {}'.format(command))
         elif command == RAISE:
-            raise CustomError("What did you do?")
+            raise CustomError(EXCEPTION)
         elif command == PING:
             bot.ping(channel)
         else:
