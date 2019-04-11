@@ -14,6 +14,11 @@ import signal
 import time
 import os
 from slackclient import SlackClient
+<<<<<<< Updated upstream
+=======
+from spotbot import artist_top_10, sp, get_playlists, search_tool
+from dotenv import load_dotenv
+>>>>>>> Stashed changes
 
 __author__ = 'dougenas and mpmckenz'
 BOT_NAME = 'Spotbot'
@@ -52,6 +57,7 @@ def formatted_dict(d, k_header='Keys', v_header='Values'):
 print(formatted_dict(bot_commands, k_header="My cmds", v_header='What they do'))
 
 
+
 def config_logger():
     """Setup logging configuration"""
     global logger
@@ -70,9 +76,51 @@ def config_logger():
 
 def command_loop(bot):
     """Process incoming bot commands"""
+<<<<<<< Updated upstream
     print("This is a test")
     # pass
 
+=======
+    HELP = "help"
+    STAIRWAY = "stairway"
+    PLAYLIST = "playlist"
+    RAISE = "raise"
+    LOGOUT = "logout"
+    PING = "ping"
+    FUNPLAYLIST = "fun"
+
+    global stay_running
+
+    command, channel = bot.parse_bot_commands(bot.slack_client.rtm_read())
+    if command:
+        if command == HELP:
+            bot.help(channel)
+        elif command == STAIRWAY:
+            bot.stairway(channel)
+        elif command == PLAYLIST:
+            bot.playlist(channel)
+        elif command == LOGOUT:
+            stay_running = False
+            bot.logout(channel)
+            logger.info('User initiated command: {}'.format(command))
+        elif command == RAISE:
+            raise CustomError("What did you do?")
+        elif command == PING:
+            bot.ping(channel)
+        elif command == FUNPLAYLIST:
+            bot.fun(channel)
+
+
+class CustomError(Exception):
+    pass
+
+
+def signal_handler(sig_num, frame):
+    global stay_running
+    sigs = dict((k, v) for v, k in reversed(sorted(signal.__dict__.items()))
+                if v.startswith('SIG') and not v.startswith('SIG_'))
+    logger.warning('Received OS Signal: {}'.format(sigs[sig_num]))
+>>>>>>> Stashed changes
 
 def signal_handler(sig_num, frame):
     global logger
@@ -92,8 +140,16 @@ class SlackBot:
     def __repr__(self):
         pass
 
+<<<<<<< Updated upstream
     def __str__(self):
         pass
+=======
+        )
+
+    def help(self, channel):
+        message = "Try these commands: stairway | playlist | logout | ping | help | fun"
+        self.post_message(message, channel)
+>>>>>>> Stashed changes
 
     def __enter__(self):
         """Implement this method to make this a context manager"""
@@ -103,12 +159,22 @@ class SlackBot:
         """Implement this method to make this a context manager"""
         pass
 
+<<<<<<< Updated upstream
     def post_message(self, msg, chan=BOT_CHAN):
         """Sends a message to a Slack Channel"""
         sc.api_call(
             "chat.postMessage",
             channel=chan,
             text=msg)
+=======
+    def fun(self, channel):
+        info = search_tool(sp)
+        self.post_message(info, channel)
+
+    def logout(self, channel):
+        message = "Spotbot has logged off"
+        self.post_message(message, channel)
+>>>>>>> Stashed changes
 
         pass
 
@@ -116,11 +182,11 @@ class SlackBot:
         """Parses a raw command string from the bot"""
         pass
 
-
 def main():
     config_logger()
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
+<<<<<<< Updated upstream
     logger.info("Spotbot initiated")
     while still_running:
         # command_loop(bot)
@@ -134,6 +200,17 @@ def main():
             logger.error("Could not connect, will retry in 5 seconds...")
             time.sleep(5)
     pass
+
+=======
+    bot = SlackBot(slack_token)
+
+    if bot.slack_client.rtm_connect(with_team_state=False):
+        bot.post_message(ONLINE, BOT_CHAN)
+        logger.info("Spotbot initialized!")
+        while stay_running:
+            command_loop(bot)
+            time.sleep(loop_int)
+>>>>>>> Stashed changes
 
 
 if __name__ == '__main__':
