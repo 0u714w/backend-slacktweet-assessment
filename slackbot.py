@@ -64,8 +64,6 @@ def command_loop(bot):
 
     global stay_running
 
-    
-
     command, channel = bot.parse_bot_commands(bot.slack_client.rtm_read())
     if command:
         log = logger.info('User initiated command: {}'.format(command))
@@ -93,8 +91,10 @@ def command_loop(bot):
         else:
             bot.post_message(DEFAULT, BOT_CHAN)
 
+
 class CustomError(Exception):
     pass
+
 
 def signal_handler(sig_num, frame):
     global stay_running
@@ -194,6 +194,7 @@ def main():
         while stay_running:
             command_loop(bot)
             time.sleep(loop_int)
+
 
 if __name__ == '__main__':
     main()
