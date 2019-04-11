@@ -47,7 +47,6 @@ def config_logger():
     stream_handler.setFormatter(formatter)
 
     logger.addHandler(file_handler)
-    # logger.addHandler(stream_handler)
 
 
 def command_loop(bot):
@@ -65,24 +64,32 @@ def command_loop(bot):
 
     global stay_running
 
+    
+
     command, channel = bot.parse_bot_commands(bot.slack_client.rtm_read())
     if command:
+        log = logger.info('User initiated command: {}'.format(command))
         if command == HELP:
             bot.help(channel)
+            log
         elif command == STAIRWAY:
             bot.stairway(channel)
+            log
         elif command == PLAYLIST:
             bot.playlist(channel)
+            log
         elif command == LOGOUT:
             stay_running = False
             bot.logout(channel)
-            logger.info('User initiated command: {}'.format(command))
+            log
         elif command == RAISE:
             raise CustomError(EXCEPTION)
         elif command == PING:
             bot.ping(channel)
+            log
         elif command == FUNPLAYLIST:
             bot.fun(channel)
+            log
         else:
             bot.post_message(DEFAULT, BOT_CHAN)
 
