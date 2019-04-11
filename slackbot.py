@@ -21,7 +21,7 @@ from spotbot import artist_top_10, sp, get_playlists
 from dotenv import load_dotenv
 
 BOT_NAME = 'spotify_bot'
-BOT_CHAN = 'UHD6NDSH0'
+BOT_CHAN = 'CCD7MHJD8'
 
 stay_running = True
 logger = logging.getLogger(__name__)
@@ -98,6 +98,7 @@ class SlackBot:
         self.slack_client = SlackClient(bot_user_token)
         self.bot_name = BOT_NAME
         self.bot_id = self.get_bot_id()
+        self.start_time = time.time()
 
         if self.bot_id is None:
             exit("Error, could not find " + str(self.bot_name))
@@ -153,8 +154,10 @@ class SlackBot:
         self.post_message(message, channel)
 
     def ping(self, channel):
-        start_time = time.time()
-        message = "Spotbot Uptime: {} seconds".format(time.time() - start_time)
+        start_time = time.strftime(
+            '%H:%M:%S', time.localtime(self.start_time)
+            )
+        message = "Spotbot Uptime: Bot has been online since {}".format(start_time)
         self.post_message(message, channel)
 
 
@@ -167,8 +170,8 @@ def main():
     bot = SlackBot(slack_token)
     
     if bot.slack_client.rtm_connect(with_team_state=False):
-        bot.post_message(ONLINE, BOT_CHAN)
         logger.info("Spotbot initialized!")
+        bot.post_message(ONLINE, BOT_CHAN)
         while stay_running:
             command_loop(bot)
             time.sleep(loop_int)
