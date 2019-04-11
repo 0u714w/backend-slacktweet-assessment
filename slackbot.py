@@ -58,6 +58,7 @@ def command_loop(bot):
     RAISE = "raise"
     LOGOUT = "logout"
     PING = "ping"
+    DEFAULT = "Not sure what you mean. Try 'help' to see a list of usable commands"
 
     global stay_running
 
@@ -77,6 +78,8 @@ def command_loop(bot):
             raise CustomError("What did you do?")
         elif command == PING:
             bot.ping(channel)
+        else:
+            bot.post_message(DEFAULT, BOT_CHAN)
 
 class CustomError(Exception):
     pass
