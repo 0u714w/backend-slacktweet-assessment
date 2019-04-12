@@ -65,7 +65,6 @@ def command_loop(bot):
     global stay_running
 
     command, channel = bot.parse_bot_commands(bot.slack_client.rtm_read())
-    print("Channel is {}".format(channel))
     if command:
         log = logger.info('User initiated command: {}'.format(command))
         if command == HELP:
