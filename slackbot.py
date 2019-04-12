@@ -16,9 +16,7 @@ import signal
 import time
 import os
 from slackclient import SlackClient
-<< << << < Updated upstream
-== == == =
->>>>>> > Stashed changes
+
 
 __author__ = 'dougenas and mpmckenz'
 BOT_NAME = 'Spotbot'
@@ -121,9 +119,6 @@ def signal_handler(sig_num, frame):
     sigs = dict((k, v) for v, k in reversed(sorted(signal.__dict__.items()))
                 if v.startswith('SIG') and not v.startswith('SIG_'))
     logger.warning('Received OS Signal: {}'.format(sigs[sig_num]))
-
-
->>>>>> > Stashed changes
 
 
 def signal_handler(sig_num, frame):
